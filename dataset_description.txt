@@ -1,0 +1,14 @@
+{
+  'id': '0',
+  'repository_name': 'organisation/repository',
+  'func_path_in_repository': 'src/path/to/file.py',
+  'func_name': 'func',
+  'whole_func_string': 'def func(args):\n"""Docstring"""\n [...]',
+  'language': 'python', 
+  'func_code_string': '[...]',
+  'func_code_tokens': ['def', 'func', '(', 'args', ')', ...],
+  'func_documentation_string': 'Docstring',
+  'func_documentation_string_tokens': ['Docstring'],
+  'split_name': 'train',
+  'func_code_url': 'https://github.com/<org>/<repo>/blob/<hash>/src/path/to/file.py#L111-L150'
+}
