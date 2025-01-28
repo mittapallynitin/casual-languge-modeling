@@ -1,92 +1,65 @@
-from pathlib import Path
-
-from datasets import Dataset, load_dataset
-from tokenizers import Tokenizer
-from tokenizers.models import BPE
-from tokenizers.normalizers import NFD, Replace, Sequence, StripAccents
-from tokenizers.pre_tokenizers import ByteLevel, Split
+from datasets import load_dataset
+from tokenizers import Tokenizer, models, pre_tokenizers, trainers
+from tokenizers.normalizers import NFKC, Sequence, Strip, StripAccents
 from tokenizers.processors import TemplateProcessing
-from tokenizers.trainers import BpeTrainer
 
+import preprocessor as pp
 
-def get_normalizer() -> Sequence:
-    normalizer = Sequence([
-            NFD(),
-            StripAccents(),
-            Replace("\t", "    "),  # Replace tabs with spaces
-            Replace("#.*", "<COMMENT>"),  # Replace comments
-            Replace(r"(['\"])(?:(?=(\\?))\2.)*?\1", "<STRING>")
+required_field = ["func_documentation_string", "func_code_string"]
+
+def train_tokenizer(data, vocab_size=16384, save_path="./tokenizer"):
+    """
+    Train a BPE tokenizer with normalization, pre-tokenization, and post-processing.
+    """
+    # Initialize a tokenizer with a BPE model
+    tokenizer = Tokenizer(models.BPE())
+
+    # Step 1: Add a normalizer
+    tokenizer.normalizer = Sequence([
+        StripAccents(),  # Unicode normalization
+        Strip(),  # Remove leading/trailing spaces
     ])
-    return normalizer
 
-def get_post_processor():
-    return TemplateProcessing(
-        single="<START> $A <END>",  # Single sequence
-        pair="<START> $A <SEP> $B <END>",  # Pair sequence
+    # Step 2: Add a pre-tokenizer
+    tokenizer.pre_tokenizer = pre_tokenizers.Sequence([
+        pre_tokenizers.Whitespace(),  # Split by whitespace
+        pre_tokenizers.Punctuation(),  # Split punctuation
+    ])
+
+    # Step 3: Define a trainer
+    trainer = trainers.BpeTrainer(
+        vocab_size=vocab_size,
+        special_tokens=["<s>", "<pad>", "</s>", "<unk>", "<mask>"]
+    )
+
+    # Train the tokenizer
+    tokenizer.train_from_iterator(data, trainer)
+
+    # Step 4: Add a post-processor
+    tokenizer.post_processor = TemplateProcessing(
+        single="<s> $A </s>",  # For single sequences
+        pair="<s> $A </s> $B:1 </s>:1",  # For paired sequences
         special_tokens=[
-            ("<START>", 0),
-            ("<END>", 1),
-            ("<SEP>", 2),
-            ("<INDENT>", 3),
-            ("<DEDENT>", 4),
-            ("_", 5)
-        ]
+            ("<s>", tokenizer.token_to_id("<s>")),
+            ("</s>", tokenizer.token_to_id("</s>")),
+        ],
     )
 
-def get_pre_tokenizer():
-    return ByteLevel() 
+    # Save the tokenizer
+    tokenizer.save(f"{save_path}/custom_tokenizer.json")
+    print(f"Tokenizer saved at {save_path}/custom_tokenizer.json")
 
-def get_tokenizer(dataset: Dataset, name: str) -> Tokenizer:
-  """
-  The function trains a ByteLevelBPETokenizer on the dataset. 
-
-  Creates a tokenizer and saves it to disk.
-
-  Args:
-      dataset: The dataset to train the tokenizer on.
-      name: The name of the tokenizer.
-
-  Returns:
-      tokenizer: The trained tokenizer.
-  """
-
-  tokenizer_path = Path("./tokenizer/{name}_tokenizer.json".format(name = name))
-  print(tokenizer_path)
-
-  if tokenizer_path.exists():
-    # If tokenizer exists return the tokenizer
-    tokenizer = Tokenizer.from_file(str(tokenizer_path))
     return tokenizer
-  else:
-    # If tokenizer does not exist train the tokenizer
-    tokenizer = Tokenizer(BPE(unk_token="<unk>"))
-    tokenizer.normalizer = get_normalizer()
-    tokenizer.pre_tokenizer = get_pre_tokenizer()
-    tokenizer.post_processor = get_post_processor()
-
-
-    trainer = BpeTrainer(
-        vocab_size=16_384,  # Adjust based on your dataset size
-        special_tokens=["<START>", "<END>", "<SEP>", "<INDENT>", "<DEDENT>", "<unk>", "<pad>", "<mask>", "_"]
-    )
-    tokenizer.train_from_iterator(dataset['func_code_string'], trainer)
-
-    # Save files to disk
-    tokenizer_path.parent.mkdir(parents=True, exist_ok=True)
-    tokenizer.save(f"./tokenizer/{name}_tokenizer.json".format(name = name))
-    return tokenizer
-
-def clean_decoded(text):
-   return text.replace("Ġ", " ").replace("_", "").replace("Ċ", "\n")
 
 if __name__ == "__main__":
-  name = "python"
-  dataset = load_dataset("code_search_net", "python", trust_remote_code=True)["train"]
-  tokenizer = get_tokenizer(dataset, name)
+    # Prepare the data for training the tokenizer
+    data = load_dataset("code_search_net", "python", trust_remote_code=True)
+    data = [f"{item['description']} {item['code']}" for item in pp.preprocess_batch(data["train"])]
 
-  # test tokenizer on example
-  text = "def hello_world():\n    print('Hello, World!')"
-  encoded = tokenizer.encode(text)
-  print(encoded.tokens)
-  decoded = tokenizer.decode(encoded.ids)
-  print(clean_decoded(decoded))
+    # Train and save the tokenizer
+    custom_tokenizer = train_tokenizer(data)
+
+    # Test the tokenizer with a sample input
+    sample_input = "Create a function to add two numbers"
+    encoded = custom_tokenizer.encode(sample_input)
+    print("Encoded Tokens:", encoded.tokens)
