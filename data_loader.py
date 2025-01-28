@@ -55,7 +55,7 @@ def get_data_loaders(tokenizer: ptf, max_len: int) -> tuple[DataLoader, DataLoad
 
     val_dataloader = DataLoader(
         val_dataset,
-        batch_size=2,
+        batch_size=8,
         shuffle=False,
         collate_fn=codeInputCollator
     )
