@@ -1,37 +1,38 @@
-# casual-languge-modeling
-This repository create a custom Causal Lanaguge model (Auto regressive model) for Python code generation. 
+# Causal Language Modeling for Code Generation
 
-Steps:
-1. Create a custom tokenizer for Python lanaguage to handle all the nuances in the code. 
-2. Dataset used for tokenizer and model training is CodeSearchNet/Python. This dataset has ~450K training examples. 
-3. Use GPT2 architecture to CLM. 
+This repository contains a **GPT-2-based causal language model** trained on the **CodeSearchNet** Python dataset. The model is designed to generate Python code given a natural language docstring as input.
 
-# Dataset Description
-Data Source: CodeSearchNet/python
------------------------------------------------------------------------------------------------------------------
-|Columns                            | Description
------------------------------------------------------------------------------------------------------------------
-|'id'                               | 0                                                                        | 
------------------------------------------------------------------------------------------------------------------
-|'repository_name'                  | organisation/repository                                                  | 
------------------------------------------------------------------------------------------------------------------
-|'func_path_in_repository'          | src/path/to/file.py                                                      |  
------------------------------------------------------------------------------------------------------------------
-|'func_name'                        | func                                                                     |  
------------------------------------------------------------------------------------------------------------------
-|'whole_func_string'                | def func(args):\n"""Docstring"""\n [...]                                 |  
------------------------------------------------------------------------------------------------------------------
-|'language'                         | python'                                                                  |  
------------------------------------------------------------------------------------------------------------------
-|'func_code_string'                 | [...]                                                                    |  
------------------------------------------------------------------------------------------------------------------
-|'func_code_tokens'                 | ['def', 'func', '(', 'args', ')', ...                                    |  
------------------------------------------------------------------------------------------------------------------
-|'func_documentation_string'        | Docstring                                                                |  
------------------------------------------------------------------------------------------------------------------
-|'func_documentation_string_tokens'  | ['Docstring'                                                             |  
------------------------------------------------------------------------------------------------------------------
-|'split_name'                       | train                                                                    |  
------------------------------------------------------------------------------------------------------------------
-|'func_code_url'                    | https://github.com/<org>/<repo>/blob/<hash>/src/path/to/file.py#L111-L15 |   
------------------------------------------------------------------------------------------------------------------
+## 📌 Features
+
+- **Custom Tokenizer**: Built from scratch instead of using the default GPT-2 tokenizer.
+- **Fine-tuned GPT-2**: Trained on Python-specific code snippets.
+- **Docstring-to-Code Generation**: Generates function implementations from textual descriptions.
+- **Efficient Training Pipeline**: Implements dataset preprocessing, model training, and evaluation using PyTorch and Hugging Face’s Transformers.
+
+---
+
+## 📂 Project Structure
+causal-language-modeling/
+├── model_config.py
+├── train.py
+├── tokenizer.py
+├── preprocessor.py
+├── data_loader.py
+│── notebooks/
+│── tokenizer/
+|   |── custom_tokenizer.json
+│── README.md
+│── LICENSE
+
+## Training Data
+The model is trained on the Python subset of CodeSearchNet, a dataset containing 800K of function-docstring pairs.
+
+## 🛠 Technologies Used
+	•	PyTorch
+	•	Transformers (Hugging Face)
+	•	Tokenizers
+	•	Datasets (Hugging Face)
+
+## 📜 License
+
+This project is licensed under the MIT License. See LICENSE for details.
