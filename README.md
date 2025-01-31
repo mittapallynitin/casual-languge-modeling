@@ -11,17 +11,6 @@ This repository contains a **GPT-2-based causal language model** trained on the 
 
 ---
 
-## 📂 Project Structure
-causal-language-modeling/  
-├── model_config.py  
-├── train.py  
-├── tokenizer.py  
-├── preprocessor.py  
-├── data_loader.py  
-│── notebooks/  
-│── tokenizer/  
-|   |── custom_tokenizer.json  
-│── README.md  
 
 ## Training Data
 The model is trained on the Python subset of CodeSearchNet, a dataset containing 800K of function-docstring pairs.  
